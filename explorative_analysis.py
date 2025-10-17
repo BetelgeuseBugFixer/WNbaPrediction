@@ -61,6 +61,11 @@ def main():
     for statistic in statistics:
         create_scatterplot(team_stats, 'won', statistic)
 
+    # plot players performance change from one year to the next
+
+
+    # check if data is correct
+
 
 if __name__ == '__main__':
     main()
