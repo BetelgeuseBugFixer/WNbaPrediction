@@ -27,14 +27,15 @@ def create_scatterplot(df, x_column, y_column, title=None, xlabel=None, ylabel=N
 
 def main():
     team_stats = pd.read_csv("basketballPlayoffs/teams.csv")
-    player_stats = pd.read_csv("basketballPlayoffs/players_teams.csv")
+    players_stats = pd.read_csv("basketballPlayoffs/players.csv")
+    players_teams_stats = pd.read_csv("basketballPlayoffs/players_teams.csv")
 
-    player_stats["o_ind"] = player_stats["points"] + 1.5 * player_stats["assists"] + 1.2 * player_stats["oRebounds"] \
-        + 0.75 * player_stats["threeMade"] - 1.5 * player_stats["turnovers"] \
-        - 0.7 * (player_stats["fgAttempted"] - player_stats["fgMade"]) \
-        - 0.5 * (player_stats["ftAttempted"] - player_stats["ftMade"])
+    players_teams_stats["o_ind"] = players_teams_stats["points"] + 1.5 * players_teams_stats["assists"] + 1.2 * players_teams_stats["oRebounds"] \
+        + 0.75 * players_teams_stats["threeMade"] - 1.5 * players_teams_stats["turnovers"] \
+        - 0.7 * (players_teams_stats["fgAttempted"] - players_teams_stats["fgMade"]) \
+        - 0.5 * (players_teams_stats["ftAttempted"] - players_teams_stats["ftMade"])
 
-    player_stats["d_ind"] = player_stats["dRebounds"] + 1.7 * player_stats["steals"] + 1.3 * player_stats["oRebounds"] - 0.8 * player_stats["PF"]
+    players_teams_stats["d_ind"] = players_teams_stats["dRebounds"] + 1.7 * players_teams_stats["steals"] + 1.3 * players_teams_stats["oRebounds"] - 0.8 * players_teams_stats["PF"]
 
     # player_stats["o_rat"] = player_stats["points"] / (player_stats["o_fgAttempted"] + (player_stats["o_ftAttempted"] * 0.4) + player_stats["o_to"] - player_stats["o_reb"])
 
@@ -50,9 +51,10 @@ def main():
     team_stats['net_rat'] = team_stats["o_rat"] - team_stats["d_rat"]
     statistics = ["o_rat","d_rat","net_rat"]
 
-    player_teams_stats = pd.merge(player_stats, team_stats, on='tmID', how="inner")
+    players_teams_stats = pd.merge(players_teams_stats, players_stats, left_on='playerID', right_on="bioID", how="inner", validate="m:m")
+    players_teams_stats = pd.merge(players_teams_stats, team_stats, on='tmID', how="inner", validate="m:m")
 
-    create_scatterplot(player_teams_stats, 'o_ind', 'd_ind')
+    create_scatterplot(players_teams_stats, 'o_ind', 'd_ind')
 
     # for year in range(1,11):
     #    year_data = data[data['years'] == year]
