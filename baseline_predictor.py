@@ -191,7 +191,6 @@ def main():
         print("MAE:", mean_absolute_error(y_val, prediction))
         print("R²:", r2_score(y_val, prediction))
         plot_predictions(y_val,prediction,algorithm)
-        compare_rankings(y_val, prediction, team_names,algorithm)
 
 
 if __name__ == '__main__':
