@@ -102,7 +102,7 @@ def calculate_input(player_file, team_file, year):
     team_df = pd.read_csv(team_file)
 
     # add win percentage
-    team_df = team_df[["year", "tmID", "won", "lost", "GP"]]
+    team_df = team_df[["year", "confID", "tmID", "won", "lost", "GP"]]
     team_df["win_per"] = team_df["won"] / team_df["GP"]
 
     player_df = add_offensive_and_defensive_rating_to_df(player_df)
@@ -124,20 +124,23 @@ def calculate_input(player_file, team_file, year):
     team_rating["no_prev_year"] = team_rating["win_per_prev"].isna().astype(int)
     team_rating["win_per_prev"] = team_rating["win_per_prev"].fillna(0.5)
 
+
+    #add indicator of league
     # analyse
     #create_scatterplot(team_rating, "prev_year_avg_ind", "win_per", hue="win_per_prev")
     print_full_table(team_rating[["prev_year_avg_ind","prev_year_o_avg_ind","prev_year_d_avg_ind", "new_players", "win_per_prev", "win_per"]].corr(),4)
     #sns.pairplot(team_rating[["prev_year_avg_ind", "new_players", "win_per_prev", "win_per"]])
     plt.show()
     # split
+    team_rating["confID"] = (team_rating["confID"] == "EA").astype(int)
 
     train_df = team_rating[team_rating["year"] < 9]
     train_df = train_df[train_df["year"] > 1]
 
     val_df = team_rating[team_rating["year"] > 8]
 
-    x_train = train_df[["prev_year_avg_ind", "new_players", "win_per_prev"]]
-    x_val = val_df[["prev_year_avg_ind", "new_players", "win_per_prev"]]
+    x_train = train_df[["prev_year_avg_ind", "new_players", "win_per_prev","confID"]]
+    x_val = val_df[["prev_year_avg_ind", "new_players", "win_per_prev","confID"]]
     # x_train = train_df[["prev_year_o_avg_ind","prev_year_d_avg_ind", "new_players", "win_per_prev"]]
     # x_val = val_df[["prev_year_o_avg_ind","prev_year_d_avg_ind", "new_players", "win_per_prev"]]
 
@@ -150,8 +153,7 @@ def calculate_input(player_file, team_file, year):
     y_train = train_df["win_per"]
     y_val = val_df["win_per"]
 
-    team_names=team_rating["tmID"]
-    return x_train, x_val, y_train, y_val, team_names
+    return x_train, x_val, y_train, y_val
 
 
 def linear_regression(x_train, x_val, y_train):
@@ -188,7 +190,7 @@ def plot_predictions(y_true, y_pred, title):
 
 def main():
     # get input
-    x_train, x_val, y_train, y_val, team_names = calculate_input("basketballPlayoffs/players_teams.csv",
+    x_train, x_val, y_train, y_val = calculate_input("basketballPlayoffs/players_teams.csv",
                                                      "basketballPlayoffs/teams.csv", 9)
     # apply predictions
     average_pred = average_predictor(y_train, y_val)
