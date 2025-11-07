@@ -27,8 +27,15 @@ def print_full_table(df, decimals=3):
 
 
 def add_team_rating(player_df, team_df):
+    from collections import defaultdict
     team_starting_squad = defaultdict(lambda: defaultdict(list))
     player_performance_prev_year = defaultdict(dict)
+
+    # escolher coluna de equipa robustamente
+    tm_col = next((c for c in ["tmID", "tmID_y", "tmID_x"] if c in player_df.columns), None)
+    if tm_col is None:
+        raise KeyError("Falta coluna tmID/tmID_x/tmID_y em player_df")
+
     player_o_performance_prev_year = defaultdict(dict)
     player_d_performance_prev_year = defaultdict(dict)
     for row in player_df.itertuples():
@@ -38,10 +45,14 @@ def add_team_rating(player_df, team_df):
         rating = row.avg_ind
         o_rating = row.o_ind
         d_rating = row.d_ind
+
         player_performance_prev_year[player][year + 1] = rating
         player_o_performance_prev_year[player][year + 1] = o_rating
         player_d_performance_prev_year[player][year + 1] = d_rating
         team_starting_squad[team_id][year].append(player)
+
+    # ... (resto da função igual)
+
     team_average_rating_list = []
     team_average_o_rating_list = []
     team_average_d_rating_list = []

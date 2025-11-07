@@ -1,14 +1,44 @@
+import numpy as np
+import pandas as pd
+
+# ...
+
 def add_offensive_and_defensive_rating_to_df(players_teams_stats):
-    group_cols = ["playerID", "year"]
-    sum_cols=["GP", "GS", "minutes", "points", "oRebounds", "dRebounds", "rebounds", "assists", "steals", "blocks", "turnovers", "PF", "fgAttempted", "fgMade", "ftAttempted", "ftMade", "threeAttempted", "threeMade", "dq", "PostGP", "PostGS", "PostMinutes", "PostPoints", "PostoRebounds", "PostdRebounds", "PostRebounds", "PostAssists", "PostSteals", "PostBlocks", "PostTurnovers", "PostPF", "PostfgAttempted", "PostfgMade", "PostftAttempted", "PostftMade", "PostthreeAttempted", "PostthreeMade", "PostDQ"]
-    agg_dict = {col: "sum" for col in sum_cols}
-    players_teams_stats = players_teams_stats.groupby(group_cols, as_index=False).agg(agg_dict)
-    players_teams_stats["o_ind"] = players_teams_stats["points"] + 1.5 * players_teams_stats["assists"] + 1.2 * players_teams_stats["oRebounds"] \
-        + 0.75 * players_teams_stats["threeMade"] - 1.5 * players_teams_stats["turnovers"] \
-        - 0.7 * (players_teams_stats["fgAttempted"] - players_teams_stats["fgMade"]) \
-        - 0.5 * (players_teams_stats["ftAttempted"] - players_teams_stats["ftMade"])
+    df = players_teams_stats.copy()
 
-    players_teams_stats["d_ind"] = players_teams_stats["dRebounds"] + 1.7 * players_teams_stats["steals"] + 1.3 * players_teams_stats["oRebounds"] - 0.8 * players_teams_stats["PF"]
+    # ... (o resto do teu pré-cálculo fica igual)
 
-    players_teams_stats["avg_ind"]= (players_teams_stats["o_ind"] + players_teams_stats["d_ind"]) / 2
-    return players_teams_stats
+    # --- construir os índices "raw" (como já tens) ---
+    o_ind_raw = (
+        df["points"]
+        + 1.5 * df["assists"]
+        + 1.2 * df["oRebounds"]
+        + 0.75 * df["threeMade"]
+        - 1.5 * df["turnovers"]
+        - 0.7 * (df["fgAttempted"] - df["fgMade"])
+        - 0.5 * (df["ftAttempted"] - df["ftMade"])
+    )
+
+    d_ind_raw = (
+       3 * df["dRebounds"]
+        + 3 * df["steals"]
+        + 1.3 * df["oRebounds"]   # (se quiseres, troca por dRebounds e remove oRebounds aqui)
+        - 0.8 * df["PF"]          # atenção: no nosso CSV pode ser 'personalFouls'
+    )
+
+    # ✅ 1) garantir que existem no df
+    df["o_ind_raw"] = o_ind_raw
+    df["d_ind_raw"] = d_ind_raw
+
+    # Helper: z-score por ano a partir de uma Series e do ano
+    def z_by_year(series, year_series):
+        mu = series.groupby(year_series).transform("mean")
+        sd = series.groupby(year_series).transform("std").replace(0, np.nan)
+        return (series - mu) / sd
+
+    # ✅ 2) usar a própria Series agrupada por df["year"]
+    df["o_ind_z"] = z_by_year(df["o_ind_raw"], df["year"]).fillna(0)
+    df["d_ind_z"] = z_by_year(df["d_ind_raw"], df["year"]).fillna(0)
+
+    df["avg_ind"] = 3*(df["o_ind_z"] + 2*df["d_ind_z"]) / 5.0
+    return df
