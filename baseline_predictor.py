@@ -134,10 +134,10 @@ def calculate_input(player_file, team_file, year):
     # split
     team_rating["confID"] = (team_rating["confID"] == "EA").astype(int)
 
-    train_df = team_rating[team_rating["year"] < 9]
+    train_df = team_rating[team_rating["year"] < 10]
     train_df = train_df[train_df["year"] > 1]
 
-    val_df = team_rating[team_rating["year"] > 8]
+    val_df = team_rating[team_rating["year"] > 9]
 
     x_train = train_df[["prev_year_avg_ind", "new_players", "win_per_prev","confID"]]
     x_val = val_df[["prev_year_avg_ind", "new_players", "win_per_prev","confID"]]
@@ -153,7 +153,7 @@ def calculate_input(player_file, team_file, year):
     y_train = train_df["win_per"]
     y_val = val_df["win_per"]
 
-    return x_train, x_val, y_train, y_val
+    return x_train, x_val, y_train, y_val, val_df
 
 
 def linear_regression(x_train, x_val, y_train):
@@ -188,15 +188,66 @@ def plot_predictions(y_true, y_pred, title):
     plt.tight_layout()
     plt.show()
 
+def plot_ranks(df, title):
+    sns.set_style("whitegrid")
+    plt.figure(figsize=(10, 6))
+    sns.scatterplot(data=df, x="tmID", y="rank")
+    # sns.scatterplot(data=df, x="tmID", y="rank_average")
+    # sns.scatterplot(data=df, x="tmID", y="rank_random")
+    # sns.scatterplot(data=df, x="tmID", y="rank_linear")
+    sns.scatterplot(data=df, x="tmID", y="rank_rf")
+    plt.title(title, fontsize=16)
+    plt.xlabel("teams", fontsize=12)
+    plt.ylabel("ranks", fontsize=12)
+    plt.show()
+
+def divide_conferences(val_df):
+    is_east = val_df["confID"] == 0
+
+    return val_df[is_east], val_df[~is_east]
+
+def calculate_ranks(val_df, column):
+    val_df = val_df.sort_values(by=f"win_per_{column}", ascending=False)
+    east, west = divide_conferences(val_df)
+
+    east[f"rank_{column}"] = range(1, len(east) + 1)
+    west[f"rank_{column}"] = range(1, len(west) + 1)
+
+    return pd.concat([east, west])
+
+def calculate_all_ranks(val_df):
+    val_df = val_df.sort_values(by=f"win_per", ascending=False)
+    east, west = divide_conferences(val_df)
+    east["rank"] = range(1, len(east) + 1)
+    west["rank"] = range(1, len(west) + 1)
+    val_df = pd.concat([east, west])
+
+    val_df = calculate_ranks(val_df, "average")
+    val_df = calculate_ranks(val_df, "random")
+    val_df = calculate_ranks(val_df, "linear")
+    val_df = calculate_ranks(val_df, "rf")
+
+    val_df = val_df.sort_values(by=f"win_per", ascending=False)
+    east, west = divide_conferences(val_df)
+    plot_ranks(east, "East")
+    plot_ranks(west, "West")
+
 def main():
     # get input
-    x_train, x_val, y_train, y_val = calculate_input("basketballPlayoffs/players_teams.csv",
+    x_train, x_val, y_train, y_val, val_df = calculate_input("basketballPlayoffs/players_teams.csv",
                                                      "basketballPlayoffs/teams.csv", 9)
     # apply predictions
     average_pred = average_predictor(y_train, y_val)
     random_pred = random_predictor(y_train, y_val)
     linear_pred = linear_regression(x_train, x_val, y_train)
     rf_pred = random_forest(x_train, x_val, y_train)
+
+    val_df["win_per_average"] = average_pred
+    val_df["win_per_random"] = random_pred
+    val_df["win_per_linear"] = linear_pred
+    val_df["win_per_rf"] = rf_pred
+    calculate_all_ranks(val_df)
+
     predictions = [average_pred, random_pred, linear_pred, rf_pred]
     algorithms = ["Average", "Random", "Linear Regression", "Random Forest"]
     for prediction, algorithm in zip(predictions, algorithms):
