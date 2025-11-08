@@ -202,25 +202,25 @@ def plot_ranks(df, title):
     plt.show()
 
 def divide_conferences(val_df):
-    is_east = val_df["confID"] == 0
+    is_west = val_df["confID"] == 0
 
-    return val_df[is_east], val_df[~is_east]
+    return val_df[is_west], val_df[~is_west]
 
 def calculate_ranks(val_df, column):
     val_df = val_df.sort_values(by=f"win_per_{column}", ascending=False)
-    east, west = divide_conferences(val_df)
+    west, east = divide_conferences(val_df)
 
-    east[f"rank_{column}"] = range(1, len(east) + 1)
     west[f"rank_{column}"] = range(1, len(west) + 1)
+    east[f"rank_{column}"] = range(1, len(east) + 1)
 
-    return pd.concat([east, west])
+    return pd.concat([west, east])
 
 def calculate_all_ranks(val_df):
     val_df = val_df.sort_values(by=f"win_per", ascending=False)
-    east, west = divide_conferences(val_df)
-    east["rank"] = range(1, len(east) + 1)
+    west, east = divide_conferences(val_df)
     west["rank"] = range(1, len(west) + 1)
-    val_df = pd.concat([east, west])
+    east["rank"] = range(1, len(east) + 1)
+    val_df = pd.concat([west, east])
 
     val_df = calculate_ranks(val_df, "average")
     val_df = calculate_ranks(val_df, "random")
@@ -228,9 +228,9 @@ def calculate_all_ranks(val_df):
     val_df = calculate_ranks(val_df, "rf")
 
     val_df = val_df.sort_values(by=f"win_per", ascending=False)
-    east, west = divide_conferences(val_df)
-    plot_ranks(east, "East")
+    west, east = divide_conferences(val_df)
     plot_ranks(west, "West")
+    plot_ranks(east, "East")
 
 def main():
     # get input
