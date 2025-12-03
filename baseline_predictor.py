@@ -31,11 +31,6 @@ def add_team_rating(player_df, team_df):
     team_starting_squad = defaultdict(lambda: defaultdict(list))
     player_performance_prev_year = defaultdict(dict)
 
-    # escolher coluna de equipa robustamente
-    tm_col = next((c for c in ["tmID", "tmID_y", "tmID_x"] if c in player_df.columns), None)
-    if tm_col is None:
-        raise KeyError("Falta coluna tmID/tmID_x/tmID_y em player_df")
-
     player_o_performance_prev_year = defaultdict(dict)
     player_d_performance_prev_year = defaultdict(dict)
     for row in player_df.itertuples():
@@ -97,7 +92,7 @@ def add_team_rating(player_df, team_df):
     return pd.merge(ratings_df, team_df, on=["tmID", "year"], how="left")
 
 
-def calculate_input(player_file, team_file, year):
+def calculate_input(player_file, team_file):
     player_df = pd.read_csv(player_file)
     team_df = pd.read_csv(team_file)
 
@@ -235,7 +230,7 @@ def calculate_all_ranks(val_df):
 def main():
     # get input
     x_train, x_val, y_train, y_val, val_df = calculate_input("basketballPlayoffs/players_teams.csv",
-                                                     "basketballPlayoffs/teams.csv", 9)
+                                                     "basketballPlayoffs/teams.csv")
     # apply predictions
     average_pred = average_predictor(y_train, y_val)
     random_pred = random_predictor(y_train, y_val)
