@@ -27,10 +27,10 @@ def add_offensive_and_defensive_rating_to_df(players_teams_stats):
     )
 
     # ✅ 1) garantir que existem no df
-    df["o_ind"] = (o_ind_raw / df["minutes"])
-    df["d_ind"] = (d_ind_raw / df["minutes"])
-    #df["o_ind"] = o_ind_raw
-    #df["d_ind"] = d_ind_raw
+    # df["o_ind"] = (o_ind_raw / df["minutes"])
+    # df["d_ind"] = (d_ind_raw / df["minutes"])
+    df["o_ind"] = o_ind_raw
+    df["d_ind"] = d_ind_raw
 
 
     df["avg_ind"] = 3*(df["o_ind"] + 2*df["d_ind"]) / 5.0

@@ -9,7 +9,7 @@ from explorative_analysis import create_scatterplot
 from formulas import add_offensive_and_defensive_rating_to_df
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_absolute_error, r2_score
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 
 
 def add_team_of_next_season(row, player_team):
@@ -164,6 +164,11 @@ def random_forest(x_train, x_val, y_train):
     y_pred = rf.predict(x_val)
     return y_pred
 
+def gbr(x_train, x_val, y_train):
+    gbr = GradientBoostingRegressor(n_estimators=200, learning_rate=0.05, max_depth=3, random_state=42)
+    gbr.fit(x_train, y_train)
+    gbr_pred = gbr.predict(x_val)
+    return gbr_pred
 
 def average_predictor(y_train, y_val):
     return [y_train.mean()] * len(y_val)
